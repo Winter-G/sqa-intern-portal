@@ -1,0 +1,42 @@
+name: Scrape SQA Intern Jobs
+
+on:
+  schedule:
+    # Runs at the top of every hour (UTC). GitHub may delay this by a few
+    # minutes during high load — that's a GitHub Actions limitation, not
+    # something we can fix from this repo.
+    - cron: "0 * * * *"
+  workflow_dispatch: {}   # lets you click "Run workflow" manually to test
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraper
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scraper.py
+
+      - name: Commit updated jobs.json
+        run: |
+          git config user.name "sqa-intern-bot"
+          git config user.email "actions@github.com"
+          git add jobs.json
+          git diff --staged --quiet || git commit -m "chore: update jobs.json [automated]"
+          git push

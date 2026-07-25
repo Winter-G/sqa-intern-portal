@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>sqa-intern-portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: "#0B0F14",
+          surface: "#121922",
+          surface2: "#1A2430",
+          line: "#26313D",
+          ink: "#E7EDF3",
+          muted: "#8CA0B3",
+          cyan: "#43D9C8",
+          pass: "#5FD9A4",
+          mid: "#F4B860",
+          low: "#F2666B",
+        },
+        fontFamily: {
+          mono: ['"JetBrains Mono"', "monospace"],
+          sans: ['"Inter"', "sans-serif"],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  body { background: #0B0F14; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #26313D; border-radius: 8px; }
+  ::-webkit-scrollbar-track { background: #0B0F14; }
+  select { color-scheme: dark; }
+</style>
+</head>
+<body class="font-sans text-ink">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+/* ---------------------------------------------------------------------- */
+/* QA / SQA skill & knowledge keyword bank used for CV <-> job matching   */
+/* ---------------------------------------------------------------------- */
+const QA_SKILLS = [
+  "manual testing","automation testing","test case","test cases","test plan",
+  "test plans","test script","test scripts","selenium","cypress","playwright",
+  "appium","postman","rest api testing","api testing","soapui","jmeter",
+  "load testing","performance testing","regression testing","smoke testing",
+  "sanity testing","black box testing","white box testing","exploratory testing",
+  "usability testing","integration testing","unit testing","system testing",
+  "uat","user acceptance testing","stlc","sdlc","agile","scrum","kanban",
+  "jira","bugzilla","testrail","zephyr","azure devops","bug tracking",
+  "bug report","defect tracking","test automation framework","java",
+  "python","javascript","typescript","testng","junit","pytest","cucumber",
+  "bdd","tdd","gherkin","sql","database testing","git","github","ci/cd",
+  "jenkins","github actions","test documentation","test strategy",
+  "cross browser testing","mobile testing","android testing","ios testing",
+  "accessibility testing","security testing","test data","risk based testing",
+  "requirement analysis","traceability matrix","postman collections",
+  "api automation","ui automation","page object model","version control",
+  "linux","windows","excel","reporting","communication","attention to detail",
+  "problem solving","teamwork","time management",
+];
+
+function extractKeywords(text) {
+  const lower = (text || "").toLowerCase();
+  return QA_SKILLS.filter((kw) => lower.includes(kw));
+}
+
+function scoreJob(cvText, job) {
+  const jobText = `${job.title} ${job.description || ""}`;
+  const jobKeywords = extractKeywords(jobText);
+  if (jobKeywords.length === 0) {
+    return { score: null, matched: [], missing: [] };
+  }
+  const cvKeywords = new Set(extractKeywords(cvText));
+  const matched = jobKeywords.filter((k) => cvKeywords.has(k));
+  const missing = jobKeywords.filter((k) => !cvKeywords.has(k));
+  const score = Math.round((matched.length / jobKeywords.length) * 100);
+  return { score, matched, missing };
+}
+
+function scoreTier(score) {
+  if (score === null) return { color: "border-line", text: "text-muted", label: "N/A" };
+  if (score >= 65) return { color: "border-pass", text: "text-pass", label: "STRONG" };
+  if (score >= 35) return { color: "border-mid", text: "text-mid", label: "PARTIAL" };
+  return { color: "border-low", text: "text-low", label: "WEAK" };
+}
+
+/* ---------------------------------------------------------------------- */
+/* Time helpers                                                           */
+/* ---------------------------------------------------------------------- */
+function timeAgo(iso) {
+  if (!iso) return "date unknown";
+  const then = new Date(iso).getTime();
+  if (isNaN(then)) return "date unknown";
+  const diffMs = Date.now() - then;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
+function withinWindow(iso, windowKey) {
+  if (windowKey === "all") return true;
+  if (!iso) return false;
+  const days = (Date.now() - new Date(iso).getTime()) / 86400000;
+  if (windowKey === "today") return days <= 1;
+  if (windowKey === "week") return days <= 7;
+  if (windowKey === "month") return days <= 30;
+  return true;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Local storage helpers (per-browser, this is a static site — no backend) */
+/* ---------------------------------------------------------------------- */
+const LS_CV = "sqa_portal_cv_text";
+const LS_STATUS = "sqa_portal_statuses";
+
+function loadStatuses() {
+  try { return JSON.parse(localStorage.getItem(LS_STATUS) || "{}"); }
+  catch (e) { return {}; }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Status dropdown                                                        */
+/* ---------------------------------------------------------------------- */
+const STATUS_OPTIONS = ["Not applied", "Applied", "Got a call", "Received rejection", "Other"];
+
+function StatusControl({ jobId, statuses, setStatuses }) {
+  const current = statuses[jobId] || { status: "Not applied", note: "" };
+  const [customOpen, setCustomOpen] = useState(current.status === "Other");
+
+  const update = (patch) => {
+    const next = { ...statuses, [jobId]: { ...current, ...patch } };
+    setStatuses(next);
+    localStorage.setItem(LS_STATUS, JSON.stringify(next));
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <select
+        value={current.status}
+        onChange={(e) => {
+          update({ status: e.target.value });
+          setCustomOpen(e.target.value === "Other");
+        }}
+        className="bg-surface2 border border-line rounded-md px-2 py-1.5 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-cyan"
+      >
+        {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+      </select>
+      {customOpen && (
+        <input
+          type="text"
+          placeholder="Type your own status…"
+          defaultValue={current.note}
+          onBlur={(e) => update({ note: e.target.value })}
+          className="bg-surface2 border border-line rounded-md px-2 py-1.5 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-cyan"
+        />
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* Apply modal                                                            */
+/* ---------------------------------------------------------------------- */
+function ApplyModal({ job, cvText, onClose }) {
+  const [letter, setLetter] = useState(
+    `Dear Hiring Team,\n\nI'm writing to apply for the ${job.title} position at ${job.company}. `+
+    `I'm currently pursuing my BSEHons in Software Engineering and have hands-on experience with the ` +
+    `Software Quality Assurance pipeline — from writing test cases to running manual and automated checks. ` +
+    `I'd welcome the chance to bring that to your team.\n\nMy CV is attached alongside this note.\n\nBest regards,`
+  );
+  const [copied, setCopied] = useState(false);
+
+  const copyAndGo = async () => {
+    try {
+      await navigator.clipboard.writeText(letter);
+      setCopied(true);
+    } catch (e) { /* clipboard may be blocked, that's fine */ }
+    window.open(job.url, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div
+        className="bg-surface border border-line rounded-xl w-full max-w-xl max-h-[85vh] overflow-y-auto p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h3 className="font-mono text-lg text-ink">Apply — {job.title}</h3>
+            <p className="text-muted text-sm">{job.company} · {job.source}</p>
+          </div>
+          <button onClick={onClose} className="text-muted hover:text-ink text-xl leading-none">×</button>
+        </div>
+
+        <div className="text-sm text-muted mb-2">
+          {cvText
+            ? "Your CV is loaded and ready — write or tweak your cover letter below."
+            : "Heads up: you haven't uploaded a CV yet on this device. You can still write a cover letter, or head straight to the posting."}
+        </div>
+
+        <label className="text-xs uppercase tracking-wide text-muted font-mono">Cover letter</label>
+        <textarea
+          value={letter}
+          onChange={(e) => setLetter(e.target.value)}
+          rows={10}
+          className="w-full mt-1 bg-surface2 border border-line rounded-md p-3 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-cyan"
+        />
+
+        <div className="mt-4 flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={copyAndGo}
+            className="flex-1 bg-cyan text-bg font-medium rounded-md px-4 py-2.5 hover:opacity-90 transition"
+          >
+            {copied ? "Copied ✓ — opening posting…" : "Copy cover letter & open posting"}
+          </button>
+          <a
+            href={job.url} target="_blank" rel="noopener noreferrer"
+            className="flex-1 text-center border border-line rounded-md px-4 py-2.5 text-ink hover:bg-surface2 transition"
+          >
+            Just take me to the posting
+          </a>
+        </div>
+        <p className="text-xs text-muted mt-3">
+          Most job boards don't accept applications from third-party tools — this copies your
+          letter to the clipboard and opens the real posting so you can paste it (and your CV) in there.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* Job card                                                                */
+/* ---------------------------------------------------------------------- */
+function JobCard({ job, cvText, statuses, setStatuses, onApply }) {
+  const [expanded, setExpanded] = useState(false);
+  const { score, matched, missing } = useMemo(() => scoreJob(cvText, job), [cvText, job]);
+  const tier = scoreTier(score);
+  const postedIso = job.posted_date || job.first_seen;
+
+  return (
+    <div className={`bg-surface border-l-4 ${tier.color} border-t border-r border-b border-line rounded-lg p-4 flex flex-col gap-3`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-ink truncate">{job.title}</h3>
+          <p className="text-muted text-sm truncate">{job.company} · {job.location}</p>
+        </div>
+        <div className="text-right shrink-0">
+          <div className={`font-mono text-lg font-bold ${tier.text}`}>
+            {score === null ? "—" : `${score}%`}
+          </div>
+          <div className={`font-mono text-[10px] uppercase tracking-wider ${tier.text}`}>{tier.label}</div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-muted">
+        <span className="bg-surface2 px-2 py-0.5 rounded">{job.source}</span>
+        <span>{timeAgo(postedIso)}</span>
+        {!job.posted_date && <span className="italic">(discovery time — exact post date unavailable)</span>}
+      </div>
+
+      {(matched.length > 0 || missing.length > 0) && (
+        <div>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-xs text-cyan hover:underline font-mono"
+          >
+            {expanded ? "Hide match breakdown ▲" : "Show match breakdown ▼"}
+          </button>
+          {expanded && (
+            <div className="mt-2 text-xs space-y-2">
+              {matched.length > 0 && (
+                <div>
+                  <span className="text-pass font-mono">MATCHED: </span>
+                  <span className="text-muted">{matched.join(", ")}</span>
+                </div>
+              )}
+              {missing.length > 0 && (
+                <div>
+                  <span className="text-low font-mono">IMPROVE: </span>
+                  <span className="text-muted">{missing.join(", ")}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <p className="text-sm text-muted line-clamp-3">{job.description}</p>
+
+      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end justify-between mt-1 pt-3 border-t border-line">
+        <StatusControl jobId={job.id} statuses={statuses} setStatuses={setStatuses} />
+        <button
+          onClick={() => onApply(job)}
+          className="bg-cyan text-bg font-medium rounded-md px-4 py-2 text-sm whitespace-nowrap hover:opacity-90 transition"
+        >
+          Apply →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* CV upload panel                                                        */
+/* ---------------------------------------------------------------------- */
+function CvPanel({ cvText, setCvText }) {
+  const [open, setOpen] = useState(!cvText);
+  const fileRef = useRef(null);
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    try {
+      if (name.endsWith(".txt")) {
+        setCvText(await file.text());
+      } else if (name.endsWith(".pdf")) {
+        const buf = await file.arrayBuffer();
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        let text = "";
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map((it) => it.str).join(" ") + "\n";
+        }
+        setCvText(text);
+      } else if (name.endsWith(".docx")) {
+        const buf = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer: buf });
+        setCvText(result.value);
+      } else {
+        alert("Please upload a .txt, .pdf, or .docx file — or just paste your CV text below.");
+      }
+    } catch (err) {
+      alert("Couldn't read that file. Try pasting your CV text directly instead.");
+    }
+  };
+
+  const save = (text) => {
+    setCvText(text);
+    localStorage.setItem(LS_CV, text);
+  };
+
+  return (
+    <div className="bg-surface border border-line rounded-lg p-4 mb-6">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between text-left"
+      >
+        <span className="font-mono text-sm text-ink">
+          <span className="text-cyan">$</span> cv --status={cvText ? "loaded" : "empty"}
+        </span>
+        <span className="text-muted text-sm">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".txt,.pdf,.docx"
+              onChange={(e) => handleFile(e.target.files[0])}
+              className="text-xs text-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-cyan file:text-bg file:text-xs file:font-medium file:cursor-pointer"
+            />
+            <span className="text-xs text-muted">or paste below — re-upload any time you edit your CV</span>
+          </div>
+          <textarea
+            value={cvText}
+            onChange={(e) => save(e.target.value)}
+            placeholder="Paste your CV text here…"
+            rows={6}
+            className="w-full bg-surface2 border border-line rounded-md p-3 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-cyan"
+          />
+          <p className="text-xs text-muted">
+            Stored only in this browser (localStorage) — nothing is uploaded anywhere.
+            All job scores below recalculate instantly from whatever's in this box.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* Main App                                                                */
+/* ---------------------------------------------------------------------- */
+function App() {
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [cvText, setCvText] = useState(() => localStorage.getItem(LS_CV) || "");
+  const [statuses, setStatuses] = useState(loadStatuses);
+  const [applyJob, setApplyJob] = useState(null);
+
+  const [search, setSearch] = useState("");
+  const [timeWindow, setTimeWindow] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("score");
+
+  useEffect(() => {
+    fetch("./jobs.json", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => setJobs(Array.isArray(data) ? data : []))
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = useMemo(() => {
+    let list = jobs.filter((j) => {
+      if (search && !`${j.company} ${j.title}`.toLowerCase().includes(search.toLowerCase())) return false;
+      if (!withinWindow(j.posted_date || j.first_seen, timeWindow)) return false;
+      const st = (statuses[j.id] || { status: "Not applied" }).status;
+      if (statusFilter !== "all" && st !== statusFilter) return false;
+      return true;
+    });
+
+    list = list.map((j) => ({ ...j, _score: scoreJob(cvText, j).score }));
+
+    list.sort((a, b) => {
+      if (sortBy === "score") return (b._score ?? -1) - (a._score ?? -1);
+      if (sortBy === "newest") {
+        return new Date(b.posted_date || b.first_seen || 0) - new Date(a.posted_date || a.first_seen || 0);
+      }
+      if (sortBy === "company") return (a.company || "").localeCompare(b.company || "");
+      return 0;
+    });
+
+    return list;
+  }, [jobs, search, timeWindow, statusFilter, sortBy, cvText, statuses]);
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <header className="mb-6">
+        <p className="font-mono text-cyan text-sm mb-1">sqa-intern-portal $</p>
+        <h1 className="text-2xl font-bold text-ink font-mono">tracking {jobs.length} SQA intern roles</h1>
+        <p className="text-muted text-sm mt-1">
+          Pulled from ITPro.lk, DevJobs.lk, TopJobs.lk, RemoteOK & Arbeitnow · refreshed hourly by GitHub Actions
+        </p>
+      </header>
+
+      <CvPanel cvText={cvText} setCvText={setCvText} />
+
+      <div className="bg-surface border border-line rounded-lg p-3 mb-6 flex flex-wrap gap-2">
+        <input
+          type="text"
+          placeholder="Search by company or title…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 min-w-[180px] bg-surface2 border border-line rounded-md px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-cyan"
+        />
+        <select value={timeWindow} onChange={(e) => setTimeWindow(e.target.value)}
+          className="bg-surface2 border border-line rounded-md px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-cyan">
+          <option value="all">Any time</option>
+          <option value="today">Last 24h</option>
+          <option value="week">Last 7 days</option>
+          <option value="month">Last 30 days</option>
+        </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-surface2 border border-line rounded-md px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-cyan">
+          <option value="all">Any status</option>
+          {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+          className="bg-surface2 border border-line rounded-md px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-cyan">
+          <option value="score">Sort: best match</option>
+          <option value="newest">Sort: newest</option>
+          <option value="company">Sort: company A–Z</option>
+        </select>
+      </div>
+
+      {loading && <p className="text-muted font-mono text-sm">loading jobs.json…</p>}
+      {loadError && (
+        <p className="text-low font-mono text-sm">
+          couldn't load jobs.json — if you just deployed this, run the "Scrape SQA Intern Jobs"
+          workflow once from the Actions tab to generate it.
+        </p>
+      )}
+      {!loading && !loadError && filtered.length === 0 && (
+        <p className="text-muted font-mono text-sm">no jobs match these filters right now.</p>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {filtered.map((job) => (
+          <JobCard
+            key={job.id}
+            job={job}
+            cvText={cvText}
+            statuses={statuses}
+            setStatuses={setStatuses}
+            onApply={setApplyJob}
+          />
+        ))}
+      </div>
+
+      {applyJob && (
+        <ApplyModal job={applyJob} cvText={cvText} onClose={() => setApplyJob(null)} />
+      )}
+
+      <footer className="mt-10 text-center text-xs text-muted font-mono">
+        built for Winter · data refreshes hourly · scores are computed locally in your browser
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
