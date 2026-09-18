@@ -1,5 +1,38 @@
 [
   {
+    "id": "2a3a4822cb91ce609dc4",
+    "title": "Software Test (QA) Automation Engineer - Mandatory Internship",
+    "company": "IndieKidz GmbH",
+    "location": "Remote (Worldwide)",
+    "source": "Arbeitnow",
+    "url": "https://www.arbeitnow.com/jobs/companies/indiekidz-gmbh/software-test-qa-automation-engineer-mandatory-internship-berlin-490019",
+    "description": "About Occibo Occibo is an AI-powered SaaS platform for children's book creation, built by IndieKidz GmbH in Berlin. We're a small, remote-first team looking for a QA intern to help us build and maintain automated testing so we can ship new features quickly and with confidence. Internship type Mandatory internship as part of your degree program. This internship is unpaid. Tasks What you'll do ● Build end-to-end UI test automation for the Occibo web app ● Write test plans, test cases, and regression suites for core user flows ● Translate product requirements into automated checks, including edge cases ● Collaborate with the development team on test data strategies and stable selectors ● Run tests in CI, track failures, and help keep the test suite reliable ● Use AI tools to speed up test creation, analysis, and maintenance Tools you might work with Playwright, Cypress, Selenium, Jest, Vitest, GitHub Actions Requirements What we're looking for ● Currently enrolled in CS, Software Engineering, or a related field ● Experience with at least one test automation framework (Playwright or Cypress preferred) ● Comfortable with JavaScript or TypeScript and Git ● Understanding of CI pipelines a",
+    "posted_date": "2026-09-18T11:31:04+00:00",
+    "first_seen": "2026-09-18T12:38:08.207554+00:00"
+  },
+  {
+    "id": "07605028d312d970878c",
+    "title": "QA Engineer Intern at KyranzIT Pvt Ltd",
+    "company": "KyranzIT Pvt Ltd",
+    "location": "Sri Lanka",
+    "source": "ITPro.lk",
+    "url": "https://itpro.lk/job/15156/qa-engineer-intern-at-kyranzit-pvt-ltd/",
+    "description": "Location: Colombo",
+    "posted_date": "2026-09-18T09:40:42+00:00",
+    "first_seen": "2026-09-18T12:38:08.207519+00:00"
+  },
+  {
+    "id": "e4dc109e9785a995f777",
+    "title": "Mandatory Internship(Unpaid), Software Test(QA) Automation Engineer",
+    "company": "IndieKidz GmbH",
+    "location": "Remote (Worldwide)",
+    "source": "Arbeitnow",
+    "url": "https://www.arbeitnow.com/jobs/companies/indiekidz-gmbh/mandatory-internshipunpaid-software-testqa-automation-engineer-berlin-121906",
+    "description": "Occibo Studio(occibo[dot]com) is an AI powered SaaS app for children’s book creation. We are looking for a student intern to build and maintain UI test automation so we can ship fast with confidence. Location and mode Full remote or once a month onsite in Berlin. Preference for candidates who has test automation experience. Internship type Unpaid , mandatory internship as part of your degree. Tasks What you will do Build end to end UI automation for the Occibo web app Write test plans, test cases, and regression suites for functional flows Convert product requirements into automated checks, including edge cases Set up test data strategies and stable selectors with the UI team Add API level checks where needed to reduce flaky UI tests Run tests in CI, track failures, triage bugs, and keep tests reliable Add basic performance and reliability checks for key user flows Use AI tools to speed up test creation, analysis, and maintenance Tools you might use Playwright, Cypress, Selenium, WebdriverIO, TestCafe Jest, Vitest, Mocha GitHub Actions or similar CI Requirements Currently enrolled in CS, Software Engineering, or related field Experience with at least one test automation framework, ",
+    "posted_date": "2026-09-18T09:30:53+00:00",
+    "first_seen": "2026-09-18T12:38:08.207556+00:00"
+  },
+  {
     "id": "082da7363233b427265d",
     "title": "Intern – Quality Assurance (QA) at Olee AI LLC",
     "company": "Olee AI LLC",
@@ -347,7 +380,7 @@
     "location": "Remote",
     "source": "RemoteOK",
     "url": "https://remoteOK.com/remote-jobs/remote-qa-tester-entry-level-ace-it-careers-1136701",
-    "description": "Looking to start or restart your career in Software Quality Assurance?Ace IT Careers is reviewing candidates for QA Tester and QA Analyst opportunities with employers and staffing partners across the United States.This opportunity may be suitable for r... Please mention the word **SMOOTHES** and tag RMTM1LjIzMi4yMDguMTQ3 when applying to show you read the job post completely (#RMTM1LjIzMi4yMDguMTQ3). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+    "description": "Looking to start or restart your career in Software Quality Assurance?Ace IT Careers is reviewing candidates for QA Tester and QA Analyst opportunities with employers and staffing partners across the United States.This opportunity may be suitable for r... Please mention the word **SMOOTHES** and tag RMjAuMTE4LjIyMS4yMTQ= when applying to show you read the job post completely (#RMjAuMTE4LjIyMS4yMTQ=). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
     "posted_date": "2026-08-15T00:00:25+00:00",
     "first_seen": "2026-08-16T00:58:52.250518+00:00"
   },
