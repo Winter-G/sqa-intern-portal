@@ -1,5 +1,16 @@
 [
   {
+    "id": "c0beab62a0db5a10e116",
+    "title": "(Unpaid) Mandatory Internship : Software Test (QA) Automation Engineer",
+    "company": "IndieKidz GmbH",
+    "location": "Remote (Worldwide)",
+    "source": "Arbeitnow",
+    "url": "https://www.arbeitnow.com/jobs/companies/indiekidz-gmbh/unpaid-mandatory-internship-software-test-qa-automation-engineer-berlin-320686",
+    "description": "About Occibo Occibo is an AI-powered SaaS platform for children's book creation, built by IndieKidz GmbH in Berlin. We're a small, remote-first team looking for a QA intern to help us build and maintain automated testing so we can ship new features quickly and with confidence. Internship type Mandatory internship as part of your degree program. This internship is unpaid. Tasks What you'll do ● Build end-to-end UI test automation for the Occibo web app ● Write test plans, test cases, and regression suites for core user flows ● Translate product requirements into automated checks, including edge cases ● Collaborate with the development team on test data strategies and stable selectors ● Run tests in CI, track failures, and help keep the test suite reliable ● Use AI tools to speed up test creation, analysis, and maintenance Tools you might work with Playwright, Cypress, Selenium, Jest, Vitest, GitHub Actions Requirements What we're looking for ● Currently enrolled in CS, Software Engineering, or a related field ● Experience with at least one test automation framework (Playwright or Cypress preferred) ● Comfortable with JavaScript or TypeScript and Git ● Understanding of CI pipelines a",
+    "posted_date": "2026-09-30T15:31:10+00:00",
+    "first_seen": "2026-09-30T18:46:27.091587+00:00"
+  },
+  {
     "id": "48bedcab78798a60ab83",
     "title": "Junior Backend Developer (Python) (M/W/D) 20H Stellenbeschreibung Read Description Before",
     "company": "uNaice GmbH",
@@ -589,7 +600,7 @@
     "location": "Remote",
     "source": "RemoteOK",
     "url": "https://remoteOK.com/remote-jobs/remote-qa-tester-entry-level-ace-it-careers-1136701",
-    "description": "Looking to start or restart your career in Software Quality Assurance?Ace IT Careers is reviewing candidates for QA Tester and QA Analyst opportunities with employers and staffing partners across the United States.This opportunity may be suitable for r... Please mention the word **SMOOTHES** and tag RMjAuMTE4LjIxNS4xMDM= when applying to show you read the job post completely (#RMjAuMTE4LjIxNS4xMDM=). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+    "description": "Looking to start or restart your career in Software Quality Assurance?Ace IT Careers is reviewing candidates for QA Tester and QA Analyst opportunities with employers and staffing partners across the United States.This opportunity may be suitable for r... Please mention the word **SMOOTHES** and tag RNzQuMjM1LjExNy45Nw== when applying to show you read the job post completely (#RNzQuMjM1LjExNy45Nw==). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
     "posted_date": "2026-08-15T00:00:25+00:00",
     "first_seen": "2026-08-16T00:58:52.250518+00:00"
   },
